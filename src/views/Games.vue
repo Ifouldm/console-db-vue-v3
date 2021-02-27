@@ -9,30 +9,51 @@
         </v-col>
         <v-pagination
             @input=onPageChange
-            :length=page.totalPages
+            :length=pageData.totalPages
             total-visible="7"
-            :value=page.number />
+            :value=pageData.number />
     </v-container>
 </template>
 
-<script>
-import { mapActions, mapState } from 'vuex';
-import GameView from '../components/GameCard.vue';
-import Loading from '../components/Loading.vue';
-import Error from '../components/Error.vue';
+<script lang='ts'>
+import Vue from 'vue';
+import { namespace, State } from 'vuex-class';
+import Component from 'vue-class-component';
+import { getModule } from 'vuex-module-decorators';
+import GameView from '@/components/GameCard.vue';
+import LoadingAlert from '@/components/Loading.vue';
+import ErrorAlert from '@/components/Error.vue';
+import PageData from '@/store/models/pageData';
+import GameModule from '@/store/modules/gameModule';
 
-export default {
-    components: { GameView, Loading, Error },
-    name: 'Games',
-    computed: mapState(['games', 'error', 'loading', 'page']),
-    methods: {
-        ...mapActions(['loadGames']),
-        onPageChange: function pageChange(pageNo) {
-            this.loadGames(pageNo);
-        },
-    },
+const games = namespace('Games');
+@Component({
+    components: { GameView, LoadingAlert, ErrorAlert },
+})
+export default class Games extends Vue {
+    @games.State
+    public games!: object[]
+
+    @State
+    public loading!: boolean
+
+    @State
+    public error!: string
+
+    @State
+    public pageData!: PageData
+
+    @games.Action('loadGames')
+    public loadGames!: (pageNo: number) => void
+
+    @games.Action
+    public onPageChange(pageNo: number): void {
+        const connection = getModule(GameModule, this.$store);
+        this.loadGames(pageNo);
+    }
+
     mounted() {
         this.loadGames(1);
-    },
-};
+    }
+}
 </script>
